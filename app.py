@@ -256,4 +256,4 @@ def graficos_auto(data, anotaciones, leyenda, emisor_dd, clasificacion_dd):
     return graphs
 
 if __name__ == '__main__':
-    app.run_server(debug=False, port=8059)
+    app.run_server(debug=False, port=8059, host='0.0.0.0')
