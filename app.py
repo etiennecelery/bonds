@@ -20,7 +20,7 @@ external_stylesheets = [
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-# df = pd.read_excel('Book1.xlsx')
+test = pd.read_excel('prueba.xlsx')
 
 seleccion = [
     ['Alimentos','Bebidas','Vitivinicola'],
@@ -41,8 +41,8 @@ app.layout = html.Div([
         className='container box content is-large',
         children=[
             html.H1('Cómo funciona'),
-            html.P('Primero se debe seleccionar un archivo en "Seleccionar Archivo". Este archivo debe estar en el mismo formato que el de prueba, que se puede descargar a continuación.'),
-            html.A('Ver archivo de prueba', href='https://drive.google.com/file/d/1kPws57K4IlDbYf5XSkuYjeEJtFQWDbNw/view?usp=sharing'),
+            html.P('Primero se debe seleccionar un archivo en "Seleccionar Archivo". Este archivo debe estar en el mismo formato que el de prueba, que se puede descargar a continuación. El archivo puede tener más columnas que el de prueba pero siempre debe incluir las siguientes columnas con el mismo nombre: Emisor, Instrumento, Sector, Clasif., Spread, Durat .'),
+            html.A('Ver archivo de prueba', href='https://github.com/etiennecelery/bonds/raw/master/prueba.xlsx'),
             html.Br(),
             html.P('A continuación se pueden seleccionar distintas opciones que modificarán los gráficos que se generarán automáticamente'),
         ]
