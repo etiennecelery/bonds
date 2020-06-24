@@ -19,10 +19,12 @@ colors = {
 
 security_layout = go.Layout(
     font=dict(
-        family='Poppins Semibold',
-        size=14,
+        family='Poppins',
+        size=13,
         color=colors['black'],
     ),
+    titlefont_family='Poppins',
+    titlefont_size=20,
     plot_bgcolor='white',
     separators = ',.',
     xaxis=dict(
@@ -65,7 +67,8 @@ security_layout = go.Layout(
         font=dict(family='Poppins'),
     ),
     autosize=True,
-
+    height=600,
+    width=1100,
 )
 
 Security = go.layout.Template(

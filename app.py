@@ -8,26 +8,28 @@ import dash_html_components as html
 import dash_table
 import pandas as pd
 import plotly.graph_objs as go
+from plotly.io import write_image
+
 from templates import Security
-
-from dash.exceptions import PreventUpdate
-
-
 
 external_stylesheets = [
  "https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css",
 ]
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app.config['suppress_callback_exceptions'] = True
+# df = pd.read_excel('prueba.xlsx')
 
-test = pd.read_excel('prueba.xlsx')
+ranking_clasificaciones = {'AAA':100,'AA+':95,'AA':90,'AA-':85,'A+':80,'A':75,
+    'A-':70,'BBB+':65,'BBB':60,'BBB-':55,'BB+':50,'BB':45,'BB-':40,'B+':35,
+    'B':30,'B-':25,'CCC+':20,'CCC':15,'CCC-':10,'D+':3,'D':2,'D-':1}
 
 seleccion = [
     ['Alimentos','Bebidas','Vitivinicola'],
     ['Comercio'],
     ['Sanitario'],
     ['Electrico','Energia'],
-    ['Tecnologico','Telecomunicaciones'],
+    ['Telecomunicaciones','Tecnologico'],
     ['Financiero'],
     ['Forestal','Industrial','Salud'],
     ['Holding'],
@@ -36,12 +38,23 @@ seleccion = [
     ['Banco']
 ]
 
+def create_href(fig):
+    fmt = "pdf"
+    mimetype = "application/pdf"
+    filename = "figure.%s" % fmt
+
+    write_image(fig, "plots/" + filename, width=1100, height=600)
+    data = base64.b64encode(open("plots/" + filename, "rb").read()).decode("utf-8")
+    pdf_string = f"data:{mimetype};base64,{data}"
+    return pdf_string
+
 app.layout = html.Div([
     html.Div(
         className='container box content is-large',
         children=[
             html.H1('Cómo funciona'),
             html.P('Primero se debe seleccionar un archivo en "Seleccionar Archivo". Este archivo debe estar en el mismo formato que el de prueba, que se puede descargar a continuación. El archivo puede tener más columnas que el de prueba pero siempre debe incluir las siguientes columnas con el mismo nombre: Emisor, Instrumento, Sector, Clasif., Spread, Durat .'),
+            html.P('Actualización: Ahora se pueden utilizar archivos descargados directamente desde Risk America'),
             html.A('Ver archivo de prueba', href='https://github.com/etiennecelery/bonds/raw/master/prueba.xlsx'),
             html.Br(),
             html.P('A continuación se pueden seleccionar distintas opciones que modificarán los gráficos que se generarán automáticamente'),
@@ -113,14 +126,33 @@ app.layout = html.Div([
                 ),
                 dcc.RadioItems(
                     id='anotaciones',
-                    className='level',
                     labelClassName='level-item',
+                    className='level',
                     options=[
                         {'label':x, 'value':x}
-                        for x in ['Emisor','Instrumento','Desactivado']
+                        for x in ['Instrumento','Emisor','Desactivado']
                     ],
-                    value='Emisor',
-                ),]
+                    value='Instrumento',
+                ),
+                html.Div(
+                    className='field is-grouped is-grouped-centered',
+                    children=[
+                        html.Div(
+                        className='control',
+                        children=[
+                            html.H3('Orientación: ',className='has-text-centered'),
+                            dcc.Input(
+                                id='anotaciones-orientacion',
+                                type='number',
+                                placeholder="Orientación",
+                                value=90,
+                                className='input has-text-centered',
+                            ),
+                        ]
+                    )]
+
+                ),
+            ]
         ),
         html.Div(
             className='container box',
@@ -131,8 +163,8 @@ app.layout = html.Div([
                 ),
                 dcc.RadioItems(
                     id='leyenda',
-                    className='level',
                     labelClassName='level-item',
+                    className='level',
                     options=[
                         {'label':x, 'value':x}
                         for x in ['Activada','Desactivada']
@@ -162,6 +194,7 @@ def update_output(data):
     decoded = base64.b64decode(content_string)
 
     df = pd.read_excel(io.BytesIO(decoded))
+    df = df.rename(columns={'Dur':'Durat','Riesgo':'Clasif.','Nemo':'Instrumento'})
     df = df[~df.Instrumento.isna()]
 
     def create_dd_options(col):
@@ -171,6 +204,8 @@ def update_output(data):
 
     industria = create_dd_options('Emisor')
     clasif = create_dd_options('Clasif.')
+    df['ranking'] = df['Clasif.'].map(ranking_clasificaciones)
+    df = df.sort_values(by='ranking',ascending=False)
 
     return (df.to_json(date_format='iso', orient='split'),
             industria, clasif, {})
@@ -179,10 +214,11 @@ def update_output(data):
 @app.callback(Output('graphs','children'),
               [Input('dataframe','data'),
                Input('anotaciones','value'),
+               Input('anotaciones-orientacion','value'),
                Input('leyenda','value'),
                Input('dropdown-emisor','value'),
                Input('dropdown-clasif','value')])
-def graficos_auto(data, anotaciones, leyenda, emisor_dd, clasificacion_dd):
+def graficos_auto(data, anotaciones, orientacion, leyenda, emisor_dd, clasificacion_dd):
     if data is None:
         return None
 
@@ -195,35 +231,43 @@ def graficos_auto(data, anotaciones, leyenda, emisor_dd, clasificacion_dd):
         df = df[~df['Clasif.'].isin(clasificacion_dd)].copy()
 
     figures = list()
+    markers = ['circle','square','diamond','cross','x','triangle-up',
+        'triangle-down','triangle-left','triangle-right','triangle-ne',
+        'triangle-se']
+
     for sel in seleccion:
-        traces = [
-            go.Scatter(
-                x=df[df.Emisor==x].Durat,
-                y=df[df.Emisor==x].Spread,
-                mode='markers',
-                marker_size=20,
-                text=f"{x} / {df[df.Emisor==x]['Clasif.'].values[0]}",
-                name=f"{x} / {df[df.Emisor==x]['Clasif.'].values[0]}",
-            )
-            for x in df[df.Sector.isin(sel)].Emisor.unique()
-        ]
+        traces = list()
+        for ind, marker in zip(sel, markers):
+            for x in df[df.Sector==ind].Emisor.unique():
+                trace = go.Scatter(
+                    x=df[df.Emisor==x].Durat,
+                    y=df[df.Emisor==x].Spread,
+                    mode='markers',
+                    marker_size=15,
+                    marker_symbol=marker,
+                    text=f"{x} / {df[df.Emisor==x]['Clasif.'].values[0]}",
+                    name=f"{x} / {df[df.Emisor==x]['Clasif.'].values[0]}",
+                )
+                traces.append(trace)
+
         if len(sel) == 0:
-            title = f'Spread Bonos Sector {sel[0]}'
-        else:
-            title = f'Spread Bonos Sectores {" - ".join(sel)}'
+            title = f'<b>Spread Bonos Sector {sel[0]}<b>'
+        elif len(sel) > 0:
+            title = f'<b>Spread Bonos Sectores {" - ".join(sel)}<b>'
 
         if anotaciones == 'Emisor' or anotaciones == 'Instrumento':
             annotations = [
                 dict(
-                    x=df[df[anotaciones]==x].Durat.values[0],
-                    y=df[df[anotaciones]==x].Spread.values[0],
+                    x=df[df[anotaciones]==x].Durat.values[-1],
+                    y=df[df[anotaciones]==x].Spread.values[-1],
                     xref="x",
                     yref="y",
-                    text=f"{x} / {df[df[anotaciones]==x]['Clasif.'].values[0]}",
+                    text=x,
                     showarrow=True,
                     arrowhead=0,
                     ax=0,
-                    ay=-40
+                    ay=-60,
+                    textangle=-1*orientacion,
                 )
                 for x in df[df.Sector.isin(sel)][anotaciones].unique()
             ]
@@ -238,22 +282,130 @@ def graficos_auto(data, anotaciones, leyenda, emisor_dd, clasificacion_dd):
             xaxis_zeroline=False,
             title=title,
             showlegend=(True if leyenda=='Activada' else False),
-            annotations=annotations
+            annotations=annotations,
+        )
+        fig = go.Figure(traces, layout)
+
+        figures.append(fig)
+
+    for clasif in ['AA','A']:
+        clasif_todas = [clasif, clasif+'-', clasif+'+']
+        if len(df[df['Clasif.'].isin(clasif_todas)]) > 0:
+            traces = [
+                go.Scatter(
+                    x=df[df.Emisor==x].Durat,
+                    y=df[df.Emisor==x].Spread,
+                    mode='markers',
+                    marker_size=15,
+                    text=f"{x} / {df[df.Emisor==x]['Clasif.'].values[0]}",
+                    name=f"{x} / {df[df.Emisor==x]['Clasif.'].values[0]}",
+                )
+                for x in df[df['Clasif.'].isin(clasif_todas)].Emisor.unique()
+            ]
+            annotations = [
+                dict(
+                    x=df[df[anotaciones]==x].Durat.values[-1],
+                    y=df[df[anotaciones]==x].Spread.values[-1],
+                    xref="x",
+                    yref="y",
+                    text=x,
+                    showarrow=True,
+                    arrowhead=0,
+                    ax=0,
+                    ay=-60,
+                    textangle=-1*orientacion,
+                )
+                for x in df[df['Clasif.'].isin(clasif_todas)][anotaciones].unique()
+            ]
+            layout = go.Layout(
+                template=Security,
+                yaxis_title='Spread',
+                xaxis_title='Duración',
+                yaxis_zeroline=False,
+                xaxis_zeroline=False,
+                title=f"<b>Spread Bonos {clasif}<b>",
+                showlegend=(True if leyenda=='Activada' else False),
+                annotations=annotations,
+            )
+            fig = go.Figure(traces, layout)
+            figures.append(fig)
+
+    for clasif in df['Clasif.'].unique():
+        traces = [
+            go.Scatter(
+                x=df[df.Emisor==x].Durat,
+                y=df[df.Emisor==x].Spread,
+                mode='markers',
+                marker_size=15,
+                text=f"{x} / {df[df.Emisor==x]['Clasif.'].values[0]}",
+                name=f"{x} / {df[df.Emisor==x]['Clasif.'].values[0]}",
+            )
+            for x in df[df['Clasif.']==clasif].Emisor.unique()
+        ]
+        annotations = [
+            dict(
+                x=df[df[anotaciones]==x].Durat.values[-1],
+                y=df[df[anotaciones]==x].Spread.values[-1],
+                xref="x",
+                yref="y",
+                text=x,
+                showarrow=True,
+                arrowhead=0,
+                ax=0,
+                ay=-60,
+                textangle=-1*orientacion,
+            )
+            for x in df[df['Clasif.']==clasif][anotaciones].unique()
+        ]
+        layout = go.Layout(
+            template=Security,
+            yaxis_title='Spread',
+            xaxis_title='Duración',
+            yaxis_zeroline=False,
+            xaxis_zeroline=False,
+            title=f"<b>Spread Bonos {clasif}<b>",
+            showlegend=(True if leyenda=='Activada' else False),
+            annotations=annotations,
         )
         fig = go.Figure(traces, layout)
 
         figures.append(fig)
 
     graphs = [
-        dcc.Graph(
-            figure=fig,
-            id=f'graph_{i}',
-            config={'displayModeBar': False,
-                    'editable': True},
+        html.Div(
+            className='container has-text-right',
+            children=[
+                dcc.Graph(
+                    figure=fig,
+                    id=f'graph-{i}',
+                    config={'displayModeBar': False,
+                            'editable': True},
+                ),
+                html.A(
+                    href=None,
+                    id=f'download-href-{i}',
+                    children=[html.Button("Descargar Gráfico", id=f'download-button-{i}',)],
+                    target="_blank",
+                    download=f"grafico {i}.pdf"
+                )
+            ]
         )
-        for i, fig in enumerate(figures)]
-
+        for i, fig in enumerate(figures)
+    ]
     return graphs
+
+
+for i in range(20):
+    @app.callback(
+        Output(f'download-href-{i}', 'href'),
+        [Input(f'graph-{i}', 'relayoutData')],
+         [State(f'graph-{i}','figure')]
+    )
+    def download(relayout_data, fig):
+        if fig:
+            return create_href(fig)
+        else:
+            return None
 
 if __name__ == '__main__':
     app.run_server(debug=False, port=8059, host='0.0.0.0')
