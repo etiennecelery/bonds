@@ -39,7 +39,7 @@ seleccion = [
 ]
 
 def create_href(fig):
-    fmt = "svg"
+    fmt = "png"
     mimetype = "application/pdf"
     filename = "figure.%s" % fmt
 
