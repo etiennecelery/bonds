@@ -35,7 +35,6 @@ seleccion = [
     ['Holding'],
     ['Construccion','Minero'],
     ['Concesionaria','Inmobiliario'],
-    ['Banco']
 ]
 
 def create_href(fig):
@@ -50,7 +49,7 @@ def create_href(fig):
 
 app.layout = html.Div([
     html.Div(
-        className='container box content is-large',
+        className='container box content',
         children=[
             html.H1('Cómo funciona'),
             html.P('Primero se debe seleccionar un archivo en "Seleccionar Archivo". Este archivo debe estar en el mismo formato que el de prueba, que se puede descargar a continuación. El archivo puede tener más columnas que el de prueba pero siempre debe incluir las siguientes columnas con el mismo nombre: Emisor, Instrumento, Sector, Clasif., Spread, Durat .'),
@@ -135,22 +134,15 @@ app.layout = html.Div([
                     value='Instrumento',
                 ),
                 html.Div(
-                    className='field is-grouped is-grouped-centered',
-                    children=[
-                        html.Div(
-                        className='control',
-                        children=[
-                            html.H3('Orientación: ',className='has-text-centered'),
-                            dcc.Input(
-                                id='anotaciones-orientacion',
-                                type='number',
-                                placeholder="Orientación",
-                                value=90,
-                                className='input has-text-centered',
-                            ),
-                        ]
-                    )]
-
+                    className='content has-text-centered',
+                    children=html.H1('Orientación'),
+                ),
+                dcc.RadioItems(
+                    id='orientacion',
+                    labelClassName='level-item',
+                    className='level',
+                    options=[{'label':x, 'value':x} for x in [90,45,0]],
+                    value=90,
                 ),
             ]
         ),
@@ -214,7 +206,7 @@ def update_output(data):
 @app.callback(Output('graphs','children'),
               [Input('dataframe','data'),
                Input('anotaciones','value'),
-               Input('anotaciones-orientacion','value'),
+               Input('orientacion','value'),
                Input('leyenda','value'),
                Input('dropdown-emisor','value'),
                Input('dropdown-clasif','value')])
@@ -395,7 +387,7 @@ def graficos_auto(data, anotaciones, orientacion, leyenda, emisor_dd, clasificac
     return graphs
 
 
-for i in range(20):
+for i in range(19):
     @app.callback(
         Output(f'download-href-{i}', 'href'),
         [Input(f'graph-{i}', 'relayoutData')],
