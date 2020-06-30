@@ -31,10 +31,13 @@ seleccion = [
     ['Electrico','Energia'],
     ['Telecomunicaciones','Tecnologico'],
     ['Financiero'],
-    ['Forestal','Industrial','Salud'],
+    ['Forestal','Industrial'],
     ['Holding'],
     ['Construccion','Minero'],
-    ['Concesionaria','Inmobiliario'],
+    ['Concesionaria','Inmobiliario','Infraestructura'],
+    ['Salud','Educación','Transporte'],
+    ['Factoring','Leasing','Securitizadora'],
+    ['Entretenimiento']
 ]
 
 def create_href(fig):
@@ -51,7 +54,7 @@ app.layout = html.Div([
     html.Div(
         className='container box content',
         children=[
-            html.H1('Cómo funciona'),
+            html.H1('Guía de uso'),
             html.P('Primero se debe seleccionar un archivo en "Seleccionar Archivo". Este archivo debe estar en el mismo formato que el de prueba, que se puede descargar a continuación. El archivo puede tener más columnas que el de prueba pero siempre debe incluir las siguientes columnas con el mismo nombre: Emisor, Instrumento, Sector, Clasif., Spread, Durat .'),
             html.P('Actualización: Ahora se pueden utilizar archivos descargados directamente desde Risk America'),
             html.A('Ver archivo de prueba', href='https://github.com/etiennecelery/bonds/raw/master/prueba.xlsx'),
@@ -387,7 +390,7 @@ def graficos_auto(data, anotaciones, orientacion, leyenda, emisor_dd, clasificac
     return graphs
 
 
-for i in range(19):
+for i in range(22):
     @app.callback(
         Output(f'download-href-{i}', 'href'),
         [Input(f'graph-{i}', 'relayoutData')],
