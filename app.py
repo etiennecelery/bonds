@@ -40,15 +40,15 @@ seleccion = [
     ['Entretenimiento']
 ]
 
-def create_href(fig):
-    fmt = "pdf"
-    mimetype = "application/pdf"
-    filename = "figure.%s" % fmt
-
-    write_image(fig, "plots/" + filename, width=1100, height=600)
-    data = base64.b64encode(open("plots/" + filename, "rb").read()).decode("utf-8")
-    pdf_string = f"data:{mimetype};base64,{data}"
-    return pdf_string
+# def create_href(fig):
+#     fmt = "pdf"
+#     mimetype = "application/pdf"
+#     filename = "figure.%s" % fmt
+#
+#     write_image(fig, "plots/" + filename, width=1100, height=600)
+#     data = base64.b64encode(open("plots/" + filename, "rb").read()).decode("utf-8")
+#     pdf_string = f"data:{mimetype};base64,{data}"
+#     return pdf_string
 
 app.layout = html.Div([
     html.Div(
@@ -376,13 +376,13 @@ def graficos_auto(data, anotaciones, orientacion, leyenda, emisor_dd, clasificac
                     config={'displayModeBar': False,
                             'editable': True},
                 ),
-                html.A(
-                    href=None,
-                    id=f'download-href-{i}',
-                    children=[html.Button("Descargar Gráfico", id=f'download-button-{i}',)],
-                    target="_blank",
-                    download=f"grafico {i}.pdf"
-                )
+                # html.A(
+                #     href=None,
+                #     id=f'download-href-{i}',
+                #     children=[html.Button("Descargar Gráfico", id=f'download-button-{i}',)],
+                #     target="_blank",
+                #     download=f"grafico {i}.pdf"
+                # )
             ]
         )
         for i, fig in enumerate(figures)
@@ -390,17 +390,18 @@ def graficos_auto(data, anotaciones, orientacion, leyenda, emisor_dd, clasificac
     return graphs
 
 
-for i in range(22):
-    @app.callback(
-        Output(f'download-href-{i}', 'href'),
-        [Input(f'graph-{i}', 'relayoutData')],
-         [State(f'graph-{i}','figure')]
-    )
-    def download(relayout_data, fig):
-        if fig:
-            return create_href(fig)
-        else:
-            return None
+# for i in range(22):
+#     @app.callback(
+#         Output(f'download-href-{i}', 'href'),
+#         [Input(f'graph-{i}', 'relayoutData')],
+#          [State(f'graph-{i}','figure')]
+#     )
+#     def download(relayout_data, fig):
+#         if fig:
+#             return create_href(fig)
+#         else:
+#             return None
+#
 
 if __name__ == '__main__':
     app.run_server(debug=False, port=8059, host='0.0.0.0')
