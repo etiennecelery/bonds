@@ -20,7 +20,7 @@ colors = {
     'turquesa': '#40BF95',
     'turquesa oscuro': '#1F7A7A',
     'morado rosa': '#9959A6',
-    'rojo oscuro': '#5C0A18'
+    'rojo oscuro': '#5C0A18',
     'verde aqua': '#4DB280',
     'cafe oscuro': '#423324',
     'verde normal': '#33a02c',
