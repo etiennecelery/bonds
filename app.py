@@ -273,6 +273,8 @@ def graficos_auto(data, anotaciones, orientacion, leyenda, emisor_dd, clasificac
             template=Security,
             yaxis_title='Spread',
             xaxis_title='Duración',
+            xaxis_title_standoff=0,
+            yaxis_title_standoff=0,
             yaxis_zeroline=False,
             xaxis_zeroline=False,
             title=title,

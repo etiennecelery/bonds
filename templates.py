@@ -14,6 +14,17 @@ colors = {
     'pastel pink' : '#ccadb8',
     'pastel orange' : '#ff9067',
     'black': '#211915',
+    'cafe': '#A35229',
+    'amarillo verde':'#ADAD1F',
+    'verde oscuro': '#3D4224',
+    'turquesa': '#40BF95',
+    'turquesa oscuro': '#1F7A7A',
+    'morado rosa': '#9959A6',
+    'rojo oscuro': '#5C0A18'
+    'verde aqua': '#4DB280',
+    'cafe oscuro': '#423324',
+    'verde normal': '#33a02c',
+    'rosado': '#fb9a99',
 }
 
 
