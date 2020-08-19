@@ -40,16 +40,6 @@ seleccion = [
     ['Entretenimiento']
 ]
 
-# def create_href(fig):
-#     fmt = "pdf"
-#     mimetype = "application/pdf"
-#     filename = "figure.%s" % fmt
-#
-#     write_image(fig, "plots/" + filename, width=1100, height=600)
-#     data = base64.b64encode(open("plots/" + filename, "rb").read()).decode("utf-8")
-#     pdf_string = f"data:{mimetype};base64,{data}"
-#     return pdf_string
-
 app.layout = html.Div([
     html.Div(
         className='container box content',
@@ -271,18 +261,41 @@ def graficos_auto(data, anotaciones, orientacion, leyenda, emisor_dd, clasificac
 
         layout = go.Layout(
             template=Security,
-            yaxis_title='Spread',
-            xaxis_title='Duración',
-            xaxis_title_standoff=0,
-            yaxis_title_standoff=0,
             yaxis_zeroline=False,
+            yaxis_title="",
+            xaxis_title="",
             xaxis_zeroline=False,
             title=title,
             showlegend=(True if leyenda=='Activada' else False),
             annotations=annotations,
+            legend=dict(
+                yanchor="middle",
+                y=0.5,
+                xanchor="left",
+                x=-0.35
+            ),
         )
         fig = go.Figure(traces, layout)
-
+        fig.add_annotation(
+            x=0.008,
+            y=0.5,
+            xref="paper",
+            yref="paper",
+            text='Spread',
+            font_size=16,
+            showarrow=False,
+            textangle=-90,
+        )
+        fig.add_annotation(
+            x=0.5,
+            y=0.007,
+            xref="paper",
+            yref="paper",
+            text='Duración',
+            font_size=16,
+            showarrow=False,
+            textangle=0,
+        )
         figures.append(fig)
 
     for clasif in ['AA','A']:
@@ -316,15 +329,41 @@ def graficos_auto(data, anotaciones, orientacion, leyenda, emisor_dd, clasificac
             ]
             layout = go.Layout(
                 template=Security,
-                yaxis_title='Spread',
-                xaxis_title='Duración',
+                yaxis_title='',
+                xaxis_title='',
                 yaxis_zeroline=False,
                 xaxis_zeroline=False,
                 title=f"<b>Spread Bonos {clasif}<b>",
                 showlegend=(True if leyenda=='Activada' else False),
                 annotations=annotations,
+                legend=dict(
+                    yanchor="middle",
+                    y=0.5,
+                    xanchor="left",
+                    x=-0.35
+                ),
             )
             fig = go.Figure(traces, layout)
+            fig.add_annotation(
+                x=0.008,
+                y=0.5,
+                xref="paper",
+                yref="paper",
+                text='Spread',
+                font_size=16,
+                showarrow=False,
+                textangle=-90,
+            )
+            fig.add_annotation(
+                x=0.5,
+                y=0.007,
+                xref="paper",
+                yref="paper",
+                text='Duración',
+                font_size=16,
+                showarrow=False,
+                textangle=0,
+            )
             figures.append(fig)
 
     for clasif in df['Clasif.'].unique():
@@ -356,16 +395,41 @@ def graficos_auto(data, anotaciones, orientacion, leyenda, emisor_dd, clasificac
         ]
         layout = go.Layout(
             template=Security,
-            yaxis_title='Spread',
-            xaxis_title='Duración',
+            yaxis_title='',
+            xaxis_title='',
             yaxis_zeroline=False,
             xaxis_zeroline=False,
             title=f"<b>Spread Bonos {clasif}<b>",
             showlegend=(True if leyenda=='Activada' else False),
             annotations=annotations,
+            legend=dict(
+                yanchor="middle",
+                y=0.5,
+                xanchor="left",
+                x=-0.35
+            ),
         )
         fig = go.Figure(traces, layout)
-
+        fig.add_annotation(
+            x=0.008,
+            y=0.5,
+            xref="paper",
+            yref="paper",
+            text='Spread',
+            font_size=16,
+            showarrow=False,
+            textangle=-90,
+        )
+        fig.add_annotation(
+            x=0.5,
+            y=0.007,
+            xref="paper",
+            yref="paper",
+            text='Duración',
+            font_size=16,
+            showarrow=False,
+            textangle=0,
+        )
         figures.append(fig)
 
     graphs = [
@@ -378,13 +442,12 @@ def graficos_auto(data, anotaciones, orientacion, leyenda, emisor_dd, clasificac
                     config={'displayModeBar': False,
                             'editable': True},
                 ),
-                # html.A(
-                #     href=None,
-                #     id=f'download-href-{i}',
-                #     children=[html.Button("Descargar Gráfico", id=f'download-button-{i}',)],
-                #     target="_blank",
-                #     download=f"grafico {i}.pdf"
-                # )
+                html.A(
+                    download=f'grafico_{i}.jpg',
+                    href=None,
+                    id=f'download-href-{i}',
+                    children=[html.Button("Descargar Gráfico", className='button')],
+                )
             ]
         )
         for i, fig in enumerate(figures)
@@ -392,18 +455,22 @@ def graficos_auto(data, anotaciones, orientacion, leyenda, emisor_dd, clasificac
     return graphs
 
 
-# for i in range(22):
-#     @app.callback(
-#         Output(f'download-href-{i}', 'href'),
-#         [Input(f'graph-{i}', 'relayoutData')],
-#          [State(f'graph-{i}','figure')]
-#     )
-#     def download(relayout_data, fig):
-#         if fig:
-#             return create_href(fig)
-#         else:
-#             return None
-#
+for i in range(22):
+    @app.callback(
+        Output(f'download-href-{i}', 'href'),
+        [Input(f'graph-{i}', 'relayoutData')],
+         [State(f'graph-{i}','figure'),
+          State(f'graph-{i}','id')]
+    )
+    def download(relayout_data, fig, id):
+        if fig:
+            fmt = "jpg"
+            filename = "assets/%s.%s" % (id, fmt)
+            write_image(fig, filename, format=fmt, engine='kaleido', width=1100, height=500, scale=5)
+            return f'/assets/{id}.jpg'
+        else:
+            return None
+
 
 if __name__ == '__main__':
     app.run_server(debug=False, port=8059, host='0.0.0.0')
