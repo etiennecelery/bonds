@@ -40,7 +40,9 @@ seleccion = [
     ['Entretenimiento']
 ]
 
-app.layout = html.Div([
+app.layout = html.Div(
+    className='hero-body',
+    children=[
     html.Div(
         className='container box content',
         children=[
