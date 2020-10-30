@@ -18,6 +18,7 @@ external_stylesheets = [
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.config['suppress_callback_exceptions'] = True
+app.title = 'Bonos'
 # df = pd.read_excel('prueba.xlsx')
 
 ranking_clasificaciones = {'AAA':100,'AA+':95,'AA':90,'AA-':85,'A+':80,'A':75,
